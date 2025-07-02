@@ -4,5 +4,6 @@
   },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "nxCloudUrl": "https://ghost-apt-liger.ngrok-free.app",
-  "nxCloudId": "6864e4b5bbd70923c4753f1c"
+  "nxCloudId": "6864e4b5bbd70923c4753f1c",
+  "bustCache": 2
 }

@@ -1,0 +1,114 @@
+name: Quarkus CI (Nx)
+
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+    paths-ignore:
+      - '*.adoc'
+      - '*.md'
+      - '*.scenario'
+      - '*.txt'
+      - 'adr/**'
+      - '.devcontainer/**'
+      - '.dockerignore'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.yml'
+      - '.github/*.java'
+      - '.github/*.conf'
+      - '.github/workflows/doc-build.yml'
+      - '.github/workflows/ci-istio.yml'
+      - '.github/workflows/ci-kubernetes.yml'
+      - '.github/workflows/ci-sanity-check.yml'
+      - '.github/workflows/codeql-analysis.yml'
+      - '.github/workflows/deploy-snapshots.yml'
+      - '.github/workflows/jdk-early-access-build.yml'
+      - '.github/workflows/native-it-selected-graalvm.yml'
+      - '.github/workflows/owasp-check.yml'
+      - '.github/workflows/podman-build.yml'
+      - '.github/workflows/populate-cache.yml'
+      - '.github/workflows/preview.yml'
+      - '.github/workflows/preview-teardown.yml'
+      - '.github/workflows/quarkus-github-bot-lint.yml'
+      - '.github/workflows/release-build.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/vale.yml'
+      - '.gitignore'
+      - '.gitpod.yml'
+      - '.justfile'
+      - 'LICENSE'
+      - '.sdkmanrc'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '*.adoc'
+      - '*.md'
+      - '*.scenario'
+      - '*.txt'
+      - 'adr/**'
+      - '.devcontainer/**'
+      - '.dockerignore'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.yml'
+      - '.github/*.java'
+      - '.github/*.conf'
+      - '.github/workflows/doc-build.yml'
+      - '.github/workflows/ci-istio.yml'
+      - '.github/workflows/ci-kubernetes.yml'
+      - '.github/workflows/ci-sanity-check.yml'
+      - '.github/workflows/codeql-analysis.yml'
+      - '.github/workflows/deploy-snapshots.yml'
+      - '.github/workflows/jdk-early-access-build.yml'
+      - '.github/workflows/native-it-selected-graalvm.yml'
+      - '.github/workflows/owasp-check.yml'
+      - '.github/workflows/podman-build.yml'
+      - '.github/workflows/populate-cache.yml'
+      - '.github/workflows/preview.yml'
+      - '.github/workflows/preview-teardown.yml'
+      - '.github/workflows/quarkus-github-bot-lint.yml'
+      - '.github/workflows/release-build.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/vale.yml'
+      - '.gitignore'
+      - '.gitpod.yml'
+      - '.justfile'
+      - 'LICENSE'
+      - '.sdkmanrc'
+  workflow_dispatch:
+
+env:
+  # Workaround testsuite locale issue
+  LANG: en_US.UTF-8
+  COMMON_MAVEN_ARGS: "-e -B --settings .github/mvn-settings.xml --fail-at-end"
+  COMMON_TEST_MAVEN_ARGS: "-Dformat.skip -Denforcer.skip -DskipDocs -Dforbiddenapis.skip -DskipExtensionValidation -DskipCodestartValidation"
+  NATIVE_TEST_MAVEN_ARGS: "-Dtest-containers -Dstart-containers -Dquarkus.native.native-image-xmx=6g -Dnative -Dnative.surefire.skip -Dno-descriptor-tests clean install -DskipDocs"
+  JVM_TEST_MAVEN_ARGS: "-Dtest-containers -Dstart-containers -Dquarkus.test.hang-detection-timeout=300"
+  # Important: keep these selectors in sync with the grep commands in the calc_run_flags job!
+  # This may be a lot better with maven 4, but with maven 3, excluding a project does not exclude its children, and it's not possible to include a project and explicitly exclude some children; compensate by doing excludes the low-tech way, at the shell level
+  JVM_TEST_INTEGRATION_TESTS_SELECTOR: "-f integration-tests -pl !gradle -pl !maven -pl !devmode -pl !devtools"
+  JVM_TEST_NORMAL_TESTS_SELECTOR: "-pl !docs -Dno-test-modules"
+  PTS_MAVEN_ARGS: "-Ddevelocity.pts.enabled=${{ github.event_name == 'pull_request' && github.base_ref == 'main' && 'true' || 'false' }}"
+  DB_USER: hibernate_orm_test
+  DB_PASSWORD: hibernate_orm_test
+  DB_NAME: hibernate_orm_test
+  PULL_REQUEST_NUMBER: ${{ github.event.number }}
+  NX_BATCH_MODE: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: "Initial JDK 17 Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: runs-on/action@v1
+
+      - uses: actions/checkout@v4
+        with:
+          # this is important for GIB to work
+          fetch-depth: 0
+      - run: npx nx-cloud start-ci-run --distribute-on="1 linux-extra-large-plus-jvm-custom"
