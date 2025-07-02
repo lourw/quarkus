@@ -14,4 +14,4 @@ launch-templates:
       - name: Install Node
         uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-node/main.yaml'
       - name: Install Node Modules
-        uses: 'nrwl/nx-cloud-workflows/v4/workflow-steps/install-node-modules/main.yaml'
+        runs: echo "hello world"
